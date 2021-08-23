@@ -67,8 +67,9 @@ class Checkout
         @rows = []
         @cart_total = 0.00
         @savings = 0.00
-        GroceryCart.count_items.keys.each do |key, value|
-            @item_count = GroceryCart.count_items[key]
+        @grocery_cart = GroceryCart.count_items
+        @grocery_cart.keys.each do |key, value|
+            @item_count = @grocery_cart[key]
             @sale_quantity = Item.all[key]["sale_quantity"]
             @sale_price = Item.all[key]["sale_price"]
             @unit_price = Item.all[key]["unit_price"]
@@ -89,7 +90,7 @@ class Checkout
             else
                 puts "Error, please try again"
             end
-            @rows << [key.capitalize(), GroceryCart.count_items[key], "$" + '%.2f' % @item_total]
+            @rows << [key.capitalize(), @grocery_cart[key], "$" + '%.2f' % @item_total]
             @cart_total += @item_total
         end
     end
