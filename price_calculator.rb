@@ -1,4 +1,5 @@
 require 'pry'
+require 'terminal-table'
 
 class Item
     @@items = {}
@@ -41,7 +42,7 @@ class AddToCart
         else
             grocery_list.map do |item|
                 if !grocery_items_available.include?(item)
-                    abort "At least one of your items is not available, please re-enter with valid items"
+                    abort "At least one of your items is not available, please enter valid items only."
                 end
             end
         end
@@ -50,8 +51,58 @@ class AddToCart
     end
 end
 
+class Checkout
+    def print_reciept
+        calculate_reciept
+        @table = Terminal::Table.new :headings => ['Item', 'Quantity' ,'Price', ], :rows => @rows, :style => {:width => 40}
+        puts ""
+        puts @table
+        puts ""
+        puts "Total price : $" + '%.2f' % @cart_total
+        puts "You saved $" + '%.2f' % @savings + " today."
+    end
+
+    private
+
+    def calculate_reciept
+        @rows = []
+        @cart_total = 0.00
+        @savings = 0.00
+        GroceryCart.count_items.keys.each do |key, value|
+            @item_count = GroceryCart.count_items[key]
+            @sale_quantity = Item.all[key]["sale_quantity"]
+            @sale_price = Item.all[key]["sale_price"]
+            @unit_price = Item.all[key]["unit_price"]
+            @item_total = 0.00
+            if !@sale_price
+                @item_total += (@item_count * @unit_price)
+            elsif !!@sale_price
+                case 
+                when @item_count < @sale_quantity
+                    @item_total += @item_count * @unit_price
+                when @item_count >= @sale_quantity
+                    @item_total += (@item_count / @sale_quantity) * @sale_price
+                    @item_total += (@item_count % @sale_quantity) * @unit_price
+                    @savings += (@item_count * @unit_price) - @item_total
+                else 
+                    puts "Error, please try again"
+                end
+            else
+                puts "Error, please try again"
+            end
+            @rows << [key.capitalize(), GroceryCart.count_items[key], "$" + '%.2f' % @item_total]
+            @cart_total += @item_total
+        end
+    end
+end
+
 Item.new("milk", 3.97, 2, 5.00)
 Item.new("bread", 2.17, 3, 6.00)
 Item.new("banana", 0.99, nil, nil)
 Item.new("apple", 0.89, nil, nil)
 
+new_customer = AddToCart.new()
+new_customer.add_items
+
+checkout = Checkout.new()
+checkout.print_reciept
