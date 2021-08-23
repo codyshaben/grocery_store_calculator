@@ -1,4 +1,3 @@
-require 'pry'
 require 'terminal-table'
 
 class Item
